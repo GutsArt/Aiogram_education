@@ -21,20 +21,43 @@
 # get_something_1(5.0, [1, 2, 3.1], "QW")
 # get_something_1(5.0, [1, 2, 3.1])
 
+# import asyncio
+# import time
+
+
+# async def send_mail(num):
+#     print(f'Улетело сообщение {num}')
+#     await asyncio.sleep(1)  # Имитация отправки сообщения по сети
+#     print(f'Сообщение {num} доставлено')
+
+
+# async def main():
+#     for i in range(10):
+#         await send_mail(i)
+    
+
+# start_time = time.time()
+# asyncio.run(main())
+# print(f'Время выполнения программы: {time.time() - start_time} с')
+
 import asyncio
 import time
 
 
 async def send_mail(num):
-    print(f'Улетело сообщение {num}')
-    await asyncio.sleep(1)  # Имитация отправки сообщения по сети
-    print(f'Сообщение {num} доставлено')
+    print('Улетело сообщение {}'.format(num))
+    await asyncio.sleep(1)
+    print('Сообщение {} доставлено'.format(num))
 
 
 async def main():
-    for i in range(10):
-        await send_mail(i)
-    
+    tasks = [send_mail(i) for i in range(10)]
+    for i, task in enumerate(tasks):
+        print(i, task)
+    print(type(tasks))
+
+    await asyncio.gather(*tasks)
+
 
 start_time = time.time()
 asyncio.run(main())
