@@ -15,6 +15,20 @@ def get_random_number() -> int:
     import random
     return random.randint(1, 100)
 
+
+from collections import defaultdict
+
+def new_user(message: Message):
+    if message.from_user.id not in users:
+        users[message.from_user.id] = {
+            'in_game': False,
+            'secret_number': None,
+            'attempts': None,
+            'total_games': 0,
+            'wins': 0
+        }
+users = defaultdict(new_user)
+
 # Этот хэндлер будет срабатывать на команду "/start"
 @dp.message(CommandStart()) # or Command(commands='start')
 async def process_start_command(message: Message):
