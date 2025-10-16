@@ -38,16 +38,6 @@ async def process_start_command(message: Message):
         'команд - отправьте команду /help'
     )
 
-    # users - добавляем его в словарь если его там нет
-    if message.from_user.id not in users:
-        users[message.from_user.id] = {
-            'in_game': False,
-            'secret_number': None,
-            'attempts': None,
-            'total_games': 0,
-            'wins': 0
-        }
-
 
 # Этот хэндлер будет срабатывать на команду "/help"
 @dp.message(Command(commands='help'))
