@@ -1,33 +1,40 @@
+import logging
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 
 from config import BOT_TOKEN
 
+logging.basicConfig(
+    level=logging.INFO,  # INFO покажет всё важное; DEBUG — для детальной отладки
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),                # Вывод в консоль
+        logging.FileHandler("bot.log", encoding="utf-8")  # Запись в файл bot.log
+    ]
+)
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 ATTEMPTS = 5
 
-users: dict = {}
+from collections import defaultdict
+
+users: dict = defaultdict(lambda: {
+    'in_game': False,
+    'secret_number': None,
+    'attempts': None,
+    'total_games': 0,
+    'wins': 0
+})
+# logging.info(f"👤 Новый пользователь: {message.from_user.id} ({message.from_user.full_name})")
+
 
 def get_random_number() -> int:
     import random
     return random.randint(1, 100)
 
-
-from collections import defaultdict
-
-def new_user(message: Message):
-    if message.from_user.id not in users:
-        users[message.from_user.id] = {
-            'in_game': False,
-            'secret_number': None,
-            'attempts': None,
-            'total_games': 0,
-            'wins': 0
-        }
-users = defaultdict(new_user)
 
 # Этот хэндлер будет срабатывать на команду "/start"
 @dp.message(CommandStart()) # or Command(commands='start')
@@ -69,6 +76,7 @@ async def process_stat_command(message: Message):
 async def process_cancel_command(message: Message):
     if users[message.from_user.id]['in_game']:
         users[message.from_user.id]['in_game'] = False
+        # logging.info(f"❌ {message.from_user.id} вышел из игры")
         await message.answer(
             'Вы вышли из игры. Если захотите сыграть '
             'снова - напишите об этом'
@@ -88,6 +96,8 @@ async def process_positive_answer(message: Message):
         users[message.from_user.id]['in_game'] = True
         users[message.from_user.id]['secret_number'] = get_random_number()
         users[message.from_user.id]['attempts'] = ATTEMPTS
+        # logging.info(f"🎮 {message.from_user.id} начал игру. Загадано: {users[message.from_user.id]['secret_number']}")
+
         await message.answer(
             'Ура!\n\nЯ загадал число от 1 до 100, '
             'попробуй угадать!'
@@ -104,6 +114,7 @@ async def process_positive_answer(message: Message):
 @dp.message(F.text.lower().in_(['нет', 'не', 'не хочу', 'no', 'n']))
 async def process_negative_answer(message: Message):
     if not users[message.from_user.id]['in_game']:
+        # logging.info(f"🚫 {message.from_user.id} отказался играть")
         await message.answer(
             'Жаль :(\n\n' \
             'Если захотите поиграть - просто напишите об этом'
