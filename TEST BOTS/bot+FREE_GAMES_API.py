@@ -17,12 +17,15 @@ FREE_GAMES_API = "https://www.gamerpower.com/api/giveaways?platform=epic-games-s
 @dp.message(Command(commands="info"))
 async def send_free_games_info(message: Message):
     try:
-        resp = requests.get(FREE_GAMES_API, timeout=10)
-        resp.raise_for_status()
-        # if resp.status_code != 200:
-        #     await message.answer("Не удалось получить данные о бесплатных играх.")
-        #     return
-        games  = resp.json()
+        try: 
+            resp = requests.get(FREE_GAMES_API, timeout=10)
+            resp.raise_for_status()
+            games  = resp.json()
+        except requests.RequestException as e:
+            logging.error(f"Ошибка при запросе к API: {e}")
+            await message.answer("Не удалось получить данные о бесплатных играх. Попробуйте позже.")
+            return
+        
         if not games:
             await message.answer("🎮 Сейчас нет бесплатных игр в Epic Games Store.")
             return
@@ -33,9 +36,13 @@ async def send_free_games_info(message: Message):
             status = game.get("status", "N/A")
             date = game.get("end_date", "N/A")
 
-            game_url = game.get("open_giveaway_url", "N/A")
-            search_query = game_url.split("open/")[-1].split("-epic-games")[0]
-            game_url = f"https://store.epicgames.com/en-US/browse?q={search_query}"
+            game_url = game.get("open_giveaway_url")
+            try:
+                slug = game_url.split("open/")[-1].split("-epic-games")[0]
+                game_url = f"https://store.epicgames.com/en-US/browse?q={slug}"
+            except Exception as e:
+                logging.error(f"Ошибка при формировании URL игры: {e}")
+                game_url = "https://www.epicgames.com/store/en-US/free-games"  
 
             reply_text += (f"• {title} - {status} (до {date})\n  [Epic Games]({game_url})\n\n")
 
