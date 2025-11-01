@@ -11,14 +11,37 @@ from config import BOT_TOKEN, ADMIN_CHAT_ID
 CHECK_INTERVAL = 3600  # 1 час
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-    handlers=[
-        logging.FileHandler("bot.log", encoding="utf-8"),
-        logging.StreamHandler()
-    ]
-)
+class ColorFormatter(logging.Formatter):
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    RESET = "\033[0m"
+
+    def format(self, record):
+        color = self.RESET
+        if record.levelno >= logging.ERROR:
+            color = self.RED
+        elif record.levelno >= logging.WARNING:
+            color = self.YELLOW
+
+        message = super().format(record)
+        return f"{color}{message}{self.RESET}"
+
+
+file_handler = logging.FileHandler("bot.log", encoding="utf-8")
+file_handler.setLevel(logging.WARNING)  # Только WARNING и выше
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)  # INFO и выше в консоль
+
+# Настраиваем формат
+file_formatter = logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+color_formatter = ColorFormatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+file_handler.setFormatter(file_formatter)
+stream_handler.setFormatter(color_formatter)
+
+# Настраиваем корневой логгер
+logging.basicConfig(level=logging.INFO, handlers=[file_handler, stream_handler])
+
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
@@ -87,6 +110,12 @@ async def send_free_games_info(message: Message):
     await message.answer(reply_text, parse_mode="HTML")
 
 
+@dp.errors()
+async def global_error_handler(update, exception):
+    logging.error(f"Ошибка: {exception} при обработке {update}")
+    return True  # чтобы бот не упал
+
+
 async def check_updates():
     """Фоновая задача — раз в час проверяет новые раздачи"""
     global known_giveaways
@@ -94,7 +123,7 @@ async def check_updates():
         logging.info("Проверка обновлений...")
         games = await fetch_free_games()
         if not games:
-            await asyncio.sleep(3600)
+            await asyncio.sleep(CHECK_INTERVAL)
             continue
 
         new_games = []
@@ -109,9 +138,9 @@ async def check_updates():
             for g in new_games:
                 text += format_game_info(g)
             try:
-                await bot.send_message(ADMIN_CHAT_ID, text, parse_mode="Markdown")
+                await bot.send_message(ADMIN_CHAT_ID, text, parse_mode="HTML")
             except Exception as e:
-                logging.error(f"Ошибка при отправке сообщения: {e}")
+                logging.error(f"Ошибка при отправке сообщения: {e}\n{text[:1_000]}")
 
         await asyncio.sleep(CHECK_INTERVAL) # ждать 1 час (3600 сек)
 
