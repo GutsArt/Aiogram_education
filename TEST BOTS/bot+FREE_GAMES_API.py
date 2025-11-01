@@ -33,6 +33,11 @@ async def fetch_free_games():
 def format_game_info(game):
     """Форматирование информации об игре"""
     title = game.get("title", "No title")
+    worth = game.get("worth", "N/A")
+
+    # description = game.get("description", "No description")
+    # logging.info(f"Описание игры: {description}")
+
     status = game.get("status", "N/A")
     date = game.get("end_date", "N/A")
 
@@ -44,7 +49,18 @@ def format_game_info(game):
         logging.error(f"Ошибка при формировании URL игры: {e}")
         game_url = "https://store.epicgames.com/en-US/free-games"
 
-    return f"• {title} - {status} (до {date})\n  [Epic Games]({game_url})\n\n"
+    return (
+        f"• **{title}** - {status} (до {date})\n"
+        f"  Стоимость: {worth}\n"
+        # f"  Описание: {description}\n"
+        f" [Epic Games]({game_url})\n\n"
+        )
+
+
+@dp.message(Command("start"))
+async def start_cmd(message: Message):
+    await message.answer("Привет! Теперь я буду уведомлять тебя о новых бесплатных играх.")
+    print(f"Твой chat.id: {message.chat.id}")
 
 
 @dp.message(Command("info"))
@@ -89,13 +105,6 @@ async def check_updates():
                 logging.error(f"Ошибка при отправке сообщения: {e}")
 
         await asyncio.sleep(3600)  # ждать 1 час (3600 сек)
-
-
-
-@dp.message(Command("start"))
-async def start_cmd(message: Message):
-    await message.answer("Привет! Теперь я буду уведомлять тебя о новых бесплатных играх.")
-    print(f"Твой chat.id: {message.chat.id}")
 
 
 async def main():
