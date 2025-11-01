@@ -35,8 +35,8 @@ def format_game_info(game):
     title = game.get("title", "No title")
     worth = game.get("worth", "N/A")
 
-    # description = game.get("description", "No description")
-    # logging.info(f"Описание игры: {description}")
+    description = game.get("description", "No description")
+    logging.info(f"Описание игры: {description}")
 
     status = game.get("status", "N/A")
     date = game.get("end_date", "N/A")
@@ -50,11 +50,11 @@ def format_game_info(game):
         game_url = "https://store.epicgames.com/en-US/free-games"
 
     return (
-        f"• **{title}** - {status} (до {date})\n"
-        f"  Стоимость: {worth}\n"
-        # f"  Описание: {description}\n"
-        f" [Epic Games]({game_url})\n\n"
-        )
+        f"• <code>{title}</code> - {status} (до {date})\n"
+        f"💰 <b>Стоимость:</b> {worth}\n"
+        f"📝 <b>Описание:</b> {description}\n"
+        f"🔗 <a href=\"{game_url}\">Epic Games</a>\n\n"
+    )
 
 
 @dp.message(Command("start"))
@@ -75,7 +75,7 @@ async def send_free_games_info(message: Message):
     for game in games:
         reply_text += format_game_info(game)
 
-    await message.answer(reply_text, parse_mode="Markdown")
+    await message.answer(reply_text, parse_mode="HTML")
 
 
 async def check_updates():
