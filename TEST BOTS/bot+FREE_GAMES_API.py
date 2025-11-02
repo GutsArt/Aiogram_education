@@ -11,7 +11,14 @@ from config import BOT_TOKEN, ADMIN_CHAT_ID
 CHECK_INTERVAL = 3600  # 1 час
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+    handlers=[
+        logging.FileHandler("bot.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
