@@ -2,11 +2,14 @@
 
 import logging
 import asyncio
-import requests
+import aiohttp
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message
 from config import BOT_TOKEN, ADMIN_CHAT_ID
+
+CHECK_INTERVAL = 3600  # 1 час
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,13 +24,12 @@ known_giveaways = set()
 
 async def fetch_free_games():
     """Получить список раздач из API"""
-    try:
-        resp = requests.get(FREE_GAMES_API, timeout=10)
-        resp.raise_for_status()
-        return resp.json()
-    except requests.RequestException as e:
-        logging.error(f"Ошибка при запросе к API: {e}")
-        return []
+    async with aiohttp.ClientSession() as session:
+        async with session.get(FREE_GAMES_API, timeout=10) as resp:
+            if resp.status != 200:
+                logging.error(f"Ошибка при запросе к API: {resp.status}")
+                return []
+            return await resp.json()
 
 
 def format_game_info(game):
@@ -104,7 +106,7 @@ async def check_updates():
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
 
-        await asyncio.sleep(3600)  # ждать 1 час (3600 сек)
+        await asyncio.sleep(CHECK_INTERVAL) # ждать 1 час (3600 сек)
 
 
 async def main():
