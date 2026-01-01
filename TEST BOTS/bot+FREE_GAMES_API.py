@@ -74,12 +74,12 @@ def format_game_info(game):
     date = game.get("end_date", "N/A")
 
     game_url = game.get("open_giveaway_url", "")
-    try:
-        slug = game_url.split("open/")[-1].split("-epic-games")[0]
-        game_url = f"https://store.epicgames.com/en-US/browse?q={slug}"
-    except Exception as e:
-        logging.error(f"Ошибка при формировании URL игры: {e}")
-        game_url = "https://store.epicgames.com/en-US/free-games"
+    # try:
+    #     slug = game_url.split("open/")[-1].split("-epic-games")[0]
+    #     game_url = f"https://store.epicgames.com/en-US/browse?q={slug}"
+    # except Exception as e:
+    #     logging.error(f"Ошибка при формировании URL игры: {e}")
+    #     game_url = "https://store.epicgames.com/en-US/free-games"
 
     return (
         f"• <code>{title}</code> - {status} (до {date})\n"
