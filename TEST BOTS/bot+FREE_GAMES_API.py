@@ -60,6 +60,37 @@ async def fetch_free_games():
                 logging.error(f"Ошибка при запросе к API: {resp.status}")
                 return []
             return await resp.json()
+        
+# Filter to identify real Epic Games Store giveaways        
+def is_real_epic_game(game: dict) -> bool:
+    # 1. Только полноценные игры
+    if game.get("type") != "Game":
+        return False
+
+    # # 2. Платформа должна включать Epic Games Store
+    # platforms = game.get("platforms", "").lower()
+    # if "epic games store" not in platforms:
+    #     return False
+
+    # 3. Отсекаем партнёров и мусор
+    blacklist = [
+        "alienware",
+        "dungeonloot",
+        "key",
+        "pack",
+        "dlc",
+        "beta",
+        "early access",
+    ]
+
+    title = game.get("title", "").lower()
+    url = game.get("gamerpower_url", "").lower()
+
+    for word in blacklist:
+        if word in title or word in url:
+            return False
+
+    return True
 
 
 def format_game_info(game):
@@ -98,7 +129,10 @@ async def start_cmd(message: Message):
 @dp.message(Command("info"))
 async def send_free_games_info(message: Message):
     """Команда /info — вручную показывает список бесплатных игр"""
-    games = await fetch_free_games()
+    # games = await fetch_free_games()
+    # Optional: filter to only real Epic Games Store games
+    games = [g for g in await fetch_free_games() if is_real_epic_game(g)]
+
     if not games:
         await message.answer("🎮 Сейчас нет бесплатных игр в Epic Games Store.")
         return
