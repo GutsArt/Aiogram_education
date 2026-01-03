@@ -129,8 +129,8 @@ async def start_cmd(message: Message):
 @dp.message(Command("info"))
 async def send_free_games_info(message: Message):
     """Команда /info — вручную показывает список бесплатных игр"""
-    # games = await fetch_free_games()
     # Optional: filter to only real Epic Games Store games
+    # games = await fetch_free_games()
     games = [g for g in await fetch_free_games() if is_real_epic_game(g)]
 
     if not games:
@@ -162,6 +162,10 @@ async def check_updates():
 
         new_games = []
         for game in games:
+            # Optional: skip non-Epic games
+            if not is_real_epic_game(game):
+                continue 
+
             game_id = game.get("id")
             if game_id not in known_giveaways:
                 known_giveaways.add(game_id)
