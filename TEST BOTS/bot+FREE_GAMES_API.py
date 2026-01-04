@@ -5,7 +5,7 @@ import asyncio
 import aiohttp
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton # for buttons
 from config import BOT_TOKEN, ADMIN_CHAT_ID
 
 CHECK_INTERVAL = 3600  # 1 час
@@ -142,6 +142,40 @@ async def send_free_games_info(message: Message):
         reply_text += format_game_info(game)
 
     await message.answer(reply_text, parse_mode="HTML")
+
+
+@dp.message(Command("links"))
+async def links_cmd(message: Message):
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="📷 Webcam Rathausmarkt",
+                url="https://grassau.com/webcams/rathaus_hh"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="🎲 Monopoly Online",
+                url="https://richup.io/"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="♟ Chess.com",
+                url="https://www.chess.com/de/play/online"
+            ),
+            InlineKeyboardButton(
+                text="♞ Lichess",
+                url="https://lichess.org/de"
+            )
+        ]
+    ])
+
+    await message.answer(
+        "🔗 <b>Полезные ссылки</b>",
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
 
 
 @dp.errors()
