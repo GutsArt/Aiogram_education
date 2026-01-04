@@ -6,8 +6,13 @@ import aiohttp
 from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton # for buttons
+import json
+from pathlib import Path
+
 from config import BOT_TOKEN, ADMIN_CHAT_ID
 
+
+KNOWN_FILE = "known_giveaways.json"
 CHECK_INTERVAL = 3600  # 1 час
 
 
@@ -48,8 +53,7 @@ dp = Dispatcher()
 
 FREE_GAMES_API = "https://www.gamerpower.com/api/giveaways?platform=epic-games-store"
 
-# список id раздач, чтобы не повторять уведомления
-known_giveaways = set()
+
 
 
 async def fetch_free_games():
@@ -184,6 +188,31 @@ async def global_error_handler(update, exception):
     return True  # чтобы бот не упал
 
 
+def load_known_giveaways() -> set[int]:
+    if not Path(KNOWN_FILE).exists():
+        logging.info("Файл known_giveaways.json не найден — стартуем с пустого списка")
+        return set()
+
+    try:
+        with open(KNOWN_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            logging.info(f"Загружено {len(data)} известных раздач")
+            return set(data)
+    except Exception as e:
+        logging.error(f"Ошибка чтения {KNOWN_FILE}: {e}")
+        return set()
+    
+# список id раздач, чтобы не повторять уведомления
+known_giveaways = load_known_giveaways()
+
+def save_known_giveaways():
+    try:
+        with open(KNOWN_FILE, "w", encoding="utf-8") as f:
+            json.dump(list(known_giveaways), f, indent=2)
+    except Exception as e:
+        logging.error(f"Ошибка записи {KNOWN_FILE}: {e}")
+
+
 async def check_updates():
     """Фоновая задача — раз в час проверяет новые раздачи"""
     global known_giveaways
@@ -211,6 +240,7 @@ async def check_updates():
                 text += format_game_info(g)
             try:
                 await bot.send_message(ADMIN_CHAT_ID, text, parse_mode="HTML")
+                save_known_giveaways()
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}\n{text[:1_000]}")
 
